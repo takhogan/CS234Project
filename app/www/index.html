@@ -33,15 +33,24 @@
         <meta name="msapplication-tap-highlight" content="no">
         <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover">
         <link rel="stylesheet" type="text/css" href="css/index.css">
-        <title>Hello World</title>
+        <title>Do Not Disturb!</title>
     </head>
     <body>
         <div class="app">
-            <h1>Apache Cordova</h1>
-            <div id="deviceready" class="blink">
-                <p class="event listening">Connecting to Device</p>
-                <p class="event received">Device is Ready</p>
-            </div>
+            <center>
+                <h1>Do Not Disturb</h1>
+                <div id="deviceready" class="blink">
+                    <p class="event listening">Connecting to Device</p>
+                    <p class="event received" id="indivator">Detecting Environment...</p>
+                    <p id="status" />
+                </div>
+                <div id="environment">
+                    NONE
+                </div>
+                <div id="buttondiv">
+                    <button class="button" id="refresh"> <img src="img/arrows.png" width=30px class="imageclass"> Check</button>
+                </div>
+            </center>
         </div>
         <script type="text/javascript" src="cordova.js"></script>
         <script type="text/javascript" src="js/index.js"></script>
