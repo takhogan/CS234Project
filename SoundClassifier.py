@@ -14,6 +14,35 @@ import pandas as pd
 import plotly.express as px
 import glob
 
+
+def segment_audio(filename):
+    wavfile_tuple = wavfile.read(filename)
+    sample_rate = wavfile_tuple[0]
+    wavfile_data = wavfile_tuple[1]
+    seconds = wavfile_data.shape[0] / sample_rate
+    n_splits = seconds // 20
+    new_clips = np.array_split(wavfile_data, n_splits)
+
+    extension_tuple = os.path.splitext(filename)
+    pre_extension = extension_tuple[0]
+    extension = extension_tuple[1]
+    directory_tuple = os.path.split(pre_extension)
+    directory_name = directory_tuple[0]
+    file_name = directory_tuple[1]
+
+    sub_dir_name = '/audio_clips'
+
+    if not os.path.exists(directory_name + '/audio_clips'):
+        os.mkdir(directory_name + '/audio_clips')
+
+    for clip_index in range(0, len(new_clips)):
+        new_clip = new_clips[clip_index]
+        # print(new_clip)
+        new_filename = directory_name + sub_dir_name +\
+                       '/' + file_name + ' ' + str(clip_index * 20) + '-' + str((clip_index + 1) * 20) + extension
+        wavfile.write(new_filename, sample_rate, new_clip)
+
+
 '''
 https://gist.github.com/arjunsharma97/0ecac61da2937ec52baf61af1aa1b759
 '''
@@ -91,8 +120,9 @@ def graph_fft(filename, reload=True):
     #                     filename="temp.html", auto_open=True)
 
 if __name__ == '__main__':
-    filenames = glob.glob('audio/*.m4a')
-    for filename in filenames:
-        wav_filename = m4_to_wav(filename)
-        graph_fft(wav_filename)
+    # filenames = glob.glob('audio/*.m4a')
+    # for filename in filenames:
+    #     wav_filename = m4_to_wav(filename)
+    #     graph_fft(wav_filename)
+    segment_audio('./audio/Sample lecture 1.wav')
 
