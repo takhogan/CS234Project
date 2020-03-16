@@ -25,7 +25,6 @@ const sleep = function(ms) {
 function writeFile(fileEntry, dataObj) {
     // Create a FileWriter object for our FileEntry (log.txt).
     fileEntry.createWriter(function (fileWriter) {
-
         fileWriter.onwriteend = function() {
             console.log("Successful file write...");
             readFile(fileEntry);
@@ -45,7 +44,6 @@ function writeFile(fileEntry, dataObj) {
 }
 
 function readFile(fileEntry) {
-
     fileEntry.file(function (file) {
         var reader = new FileReader();
 
@@ -63,60 +61,49 @@ function readFile(fileEntry) {
 function collectEnv() {
     // reset status
     document.getElementById("status").innerText = "";
-
+    
     // create a recording id
     let id = Math.floor(Math.random() * 10000).toString();
+    document.getElementById("debugWindow").innerText = id;
 
-    // debuggin
-    console.log("Hello yes am recording...");
     // using cordova-plugin-media and cordova-plugin-file
-    window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function (fs) {
-        console.log('file system open: ' + fs.name);
-        let fileName = fs.root.fullPath + "audio1984-" + id +(device.platform == "Android" ? ".aac" : ".mp3");
-        console.log("file name: " + fileName);
-        
-        fs.root.getFile(fileName, { create: true, exclusive: false }, function (fileEntry) {
-            console.log("fileEntry is file? " + fileEntry.isFile.toString());
-            // fileEntry.name == 'someFile.txt'
-            // fileEntry.fullPath == '/someFile.txt'
-            writeFile(fileEntry, new Blob([''], { type: "audio/mpeg" }));
-
-            // create media and record
-            let media = Media(fileName, 
-                function() {
-                    console.log("Audio file created successfully!");
-                    console.log("Media object: " + media);
-                    /*
-                    media.startRecord();
-                    // we record for 7 seconds for testing
-                    await sleep(7000);
-                    media.stopRecord();
-                    media.release();
-                    */
-                },
-                function(err) {
-                    console.log("Audio file created unsuccessfully... (" + err + ")");
-                });
-            },
-            function(_) {
-                console.log("FILE ERROR!");
-            });
-    }, function(_) {
-        console.log("FS ERROR!");
-        });
-
-    // send the file with Ajax
-    /*
-    let xhr = new XMLHttpRequest();
-    xhr.open("PUT", url + "?id=" + id);
-    xhr.setRequestHeader("Content-type", "audio/mpeg");
-    xhr.onload = function(e) {
-        document.getElementById("status").innerTex = e.target.responseText;
+    
+    let filePath = "media/1984audio-holder." + (device.platform == "Android" ? "m4a" : "mp3");
+    console.log(filePath);
+    document.getElementById("debugWindow").innerText = filePath; 
+    let media = new Media(filePath,
+    () => { console.log("successful media load!"); }, (e) => { 
+        console.log("Media error: " + e);
+        document.getElementById("debugWindow").innerText = "Media error: " + e; 
+    });
+    
+    if (media != null) {
+        console.log("Hello yes am recording...");
+        document.getElementById("debugWindow").innerText = "Hello yes am recording...";
     }
-    xhr.send(new File("audio1984/audio-" + id + ".mp3"));
-    */
-    // debuggin again
-    console.log("sent file!")
+    media.startRecord();
+    let flag = false;
+
+    setTimeout(function() {
+        media.stopRecord();
+        document.getElementById("debugWindow").innerText = "Done recording!";
+        flag = true;
+
+        // send the file with Ajax
+        // this is here because we want it to run
+        // synchronously
+        // JS is annoying
+        let xhr = new XMLHttpRequest();
+        xhr.open("PUT", url + "?id=" + id);
+        xhr.setRequestHeader("Content-type", "audio/mpeg");
+        xhr.onload = function(e) {
+            document.getElementById("status").innerTex = e.target.responseText;
+        }
+        xhr.send(new File(filePath));
+        // debuggin again
+        console.log("sent environment!");
+        document.getElementById("debugWindow").innerText = "sent environment " + id + "!";
+    }, 10000);
 }
 
 // clear all audio files on pause
@@ -150,8 +137,23 @@ var app = {
         receivedElement.setAttribute('style', 'display:block;');
 
         console.log('Received Event: ' + id);
-    }
+    },
 
+    status: {
+        0: "MEDIA_NONE",
+        1: "MEDIA_STARTING",
+        2: "MEDIA_RUNNING",
+        3: "MEDIA_PAUSED",
+        4: "MEDIA_STOPPED",
+    },
+
+    err: {
+        0: "MEDIA_SUCCESS",
+        1: "MEDIA_ERR_ABORTED",
+        2: "MEDIA_ERR_NETWORK",
+        3: "MEDIA_ERR_DECODE",
+        4: "MEDIA_ERR_NONE_SUPPORTED"
+    }
 };
 
 app.initialize();
