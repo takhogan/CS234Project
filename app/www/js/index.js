@@ -17,7 +17,7 @@
  * under the License.
  */
 
-const url = "0.0.0.0";
+const url = "localhost:5000";
 const sleep = function(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -94,7 +94,7 @@ function collectEnv() {
         // synchronously
         // JS is annoying
         let xhr = new XMLHttpRequest();
-        xhr.open("PUT", url + "?id=" + id);
+        xhr.open("PUT", url /*+ "?id=" + id*/);
         xhr.setRequestHeader("Content-type", "audio/mpeg");
         xhr.onload = function(e) {
             document.getElementById("status").innerTex = e.target.responseText;
