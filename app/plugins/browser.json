@@ -21,6 +21,12 @@
     },
     "cordova-plugin-device": {
       "PACKAGE_NAME": "io.cordova.donotdisturb"
+    },
+    "cordova-plugin-file-transfer": {
+      "PACKAGE_NAME": "io.cordova.donotdisturb"
+    },
+    "cordova-plugin-advanced-http": {
+      "PACKAGE_NAME": "io.cordova.donotdisturb"
     }
   },
   "dependent_plugins": {}

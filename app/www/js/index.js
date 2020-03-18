@@ -17,93 +17,77 @@
  * under the License.
  */
 
-const url = "localhost:5000";
+const url = "http://10.150.83.3:9966/upload";
 const sleep = function(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function writeFile(fileEntry, dataObj) {
-    // Create a FileWriter object for our FileEntry (log.txt).
-    fileEntry.createWriter(function (fileWriter) {
-        fileWriter.onwriteend = function() {
-            console.log("Successful file write...");
-            readFile(fileEntry);
-        };
-        fileWriter.onerror = function (e) {
-            console.log("Failed file write: " + e.toString());
-        };
-
-        // If data object is not passed in,
-        // create a new Blob instead.
-        if (!dataObj) {
-            dataObj = new Blob(['some file data'], { type: 'text/plain' });
-        }
-
-        fileWriter.write(dataObj);
-    });
+function checkIfFileExists(path){
+    window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fileSystem){
+        fileSystem.root.getFile(path, { create: false }, fileExists, fileDoesNotExist);
+    }, getFSFail); //of requestFileSystem
+}
+function fileExists(fileEntry){
+    alert("File " + fileEntry.fullPath + " exists!");
+}
+function fileDoesNotExist(){
+    alert("file does not exist");
+}
+function getFSFail(evt) {
+    console.log(evt.target.error.code);
 }
 
-function readFile(fileEntry) {
-    fileEntry.file(function (file) {
-        var reader = new FileReader();
-
-        reader.onloadend = function() {
-            console.log("Successful file read: " + this.result);
-            // displayFileData(fileEntry.fullPath + ": " + this.result);
-        };
-        reader.readAsText(file);
-
-    }, function(_) {
-        console.log("READ ERROR!");
-    });
-}
-
-function collectEnv() {
-    // reset status
-    document.getElementById("status").innerText = "";
-    
+function collectEnv() {    
     // create a recording id
     let id = Math.floor(Math.random() * 10000).toString();
     document.getElementById("debugWindow").innerText = id;
 
     // using cordova-plugin-media and cordova-plugin-file
-    
-    let filePath = "media/1984audio-holder." + (device.platform == "Android" ? "m4a" : "mp3");
-    console.log(filePath);
-    document.getElementById("debugWindow").innerText = filePath; 
-    let media = new Media(filePath,
-    () => { console.log("successful media load!"); }, (e) => { 
-        console.log("Media error: " + e);
-        document.getElementById("debugWindow").innerText = "Media error: " + e; 
-    });
-    
-    if (media != null) {
-        console.log("Hello yes am recording...");
-        document.getElementById("debugWindow").innerText = "Hello yes am recording...";
-    }
-    media.startRecord();
-    let flag = false;
+    window.resolveLocalFileSystemURL(cordova.file.applicationDirectory + "www/", function(entry) {
+        let filePrefix = entry.toURL();
 
-    setTimeout(function() {
-        media.stopRecord();
-        document.getElementById("debugWindow").innerText = "Done recording!";
-        flag = true;
-
-        // send the file with Ajax
-        // this is here because we want it to run
-        // synchronously
-        // JS is annoying
-        let xhr = new XMLHttpRequest();
-        xhr.open("PUT", url /*+ "?id=" + id*/);
-        xhr.setRequestHeader("Content-type", "audio/mpeg");
-        xhr.onload = function(e) {
-            document.getElementById("status").innerTex = e.target.responseText;
+        console.log("fs " + filePrefix);
+        let filePath = "/" + filePrefix + "media/1984audio-holder." + (device.platform === "Android" ? "m4a" : "mp3");
+        console.log(filePath);
+        document.getElementById("debugWindow").innerText = filePath; 
+        let media = new Media(filePath,
+        () => { console.log("successful media load!"); }, (e) => { 
+            console.log("Media error: " + e);
+            document.getElementById("debugWindow").innerText = "Media error: " + e;
+            return;
+        });
+        
+        if (media != null) {
+            console.log("Recording...");
+            document.getElementById("debugWindow").innerText = "Recording...";
         }
-        xhr.send(new File(filePath));
-        // debuggin again
-        console.log("sent environment!");
-        document.getElementById("debugWindow").innerText = "sent environment " + id + "!";
-    }, 10000);
+        media.startRecord();
+    
+        setTimeout(function() {
+            media.stopRecord();
+            document.getElementById("debugWindow").innerText = "Done recording!";
+
+            cordova.plugin.http.uploadFile(url, { "id": id }, { Authorization: 'OAuth2: token' }, filePath, "file",
+            function(response) {
+                console.log("sent environment! " + response.status);
+                document.getElementById("debugWindow").innerText = "sent environment " + id + "! (" +
+                response.status + ")";
+                document.getElementById("environment").innerText = response.data;
+            }, function(response) {
+                console.error(response.error);
+                document.getElementById("debugWindow").innerHTML = response.error;
+            });
+    
+            // debuggin again
+            if (true) {
+                
+            }
+        }, 3000);
+    }, function(err) {
+        console.log("kill me");
+        console.log(err);
+        document.getElementById("debugWindow").innerText = err;
+    });
 }
 
 // clear all audio files on pause

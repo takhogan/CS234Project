@@ -61,7 +61,7 @@ body {
 #buttondiv {
     margin-top: 10px;
 }
-
-#status {
+#debugWindow {
+    font-size: 10px !important;
     color: red;
 }
