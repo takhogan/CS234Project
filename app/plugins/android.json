@@ -28,6 +28,9 @@
     "cordova-plugin-advanced-http": {
       "OKHTTP_VERSION": "3.10.0",
       "PACKAGE_NAME": "io.cordova.donotdisturb"
+    },
+    "cordova-plugin-device-motion": {
+      "PACKAGE_NAME": "io.cordova.donotdisturb"
     }
   },
   "dependent_plugins": {}

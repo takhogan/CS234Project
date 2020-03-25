@@ -18,6 +18,7 @@
  */
 
 const url = "http://10.150.83.3:9966/upload";
+const threshold = 30;
 const sleep = function(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -44,19 +45,17 @@ function createDirectory(rootDirEntry, dirName) {
 function createFile(dirEntry, fileName, isAppend) {
     // Creates a new file or returns the file if it already exists.
     dirEntry.getFile(fileName, {create: true, exclusive: false}, function(fileEntry) {
-
         writeFile(fileEntry, null, isAppend);
-
     }, onErrorCreateFile);
 
 }
 
 function onErrorGetDir(e) {
-    document.getElementById("debugWindow").innerText = e;
+    document.getElementById("debugWindow").innerText = "could not create directory";
 }
 
 function onErrorCreateFile(e) {
-    document.getElementById("debugWindow").innerText = e;
+    document.getElementById("debugWindow").innerText = "could not create file";
 }
 
 function collectEnv() {    
@@ -71,7 +70,6 @@ function collectEnv() {
         // create new file should error if already exists
         createDirectory(entry, "media");
         createFile(entry, "media/1984." + (device.platform === "Android" ? "m4a" : "mp3"));
-
 
         console.log("fs " + filePrefix);
         let filePath = "/" + filePrefix + "media/1984." + (device.platform === "Android" ? "m4a" : "mp3");
@@ -121,13 +119,26 @@ function onPause() {
 
 // this apparently handles accelerometer data
 function handleOrientation(event) {
-    var absolute = event.absolute;
-    var alpha    = event.alpha;
-    var beta     = event.beta;
-    var gamma    = event.gamma;
-  
-    // Do stuff with the new orientation data
-    console.log(absolute + " " + alpha + " " + beta + " " + gamma);
+    // TODO: consider recognizing accelerometer patterns for greater accuracy
+    let bigChange = (Math.abs(event.alpha - app.acceldata.ab) >= threshold) ||
+        (Math.abs(app.acceldata.b - event.beta) >= threshold) ||
+        (Math.abs(app.acceldata.g - event.gamma) >= threshold); 
+
+    app.acceldata.ab = event.absolute;
+    app.acceldata.a  = event.alpha;
+    app.acceldata.b  = event.beta;
+    app.acceldata.g  = event.gamma;
+
+    console.log(app.acceldata.ab.toString() + " " + app.acceldata.a.toString() 
+        + " " + app.acceldata.b.toString() + " " + app.acceldata.g.toString());
+
+    // for debugging purposes
+    document.getElementById("debugWindow").innerText = app.acceldata.ab.toString() + " " + app.acceldata.a.toString() 
+        + " " + app.acceldata.b.toString() + " " + app.acceldata.g.toString();
+
+    // call collectEnv and redo 
+    if (bigChange)
+        collectEnv();
   }
 
 var app = {
@@ -173,6 +184,13 @@ var app = {
         2: "MEDIA_ERR_NETWORK",
         3: "MEDIA_ERR_DECODE",
         4: "MEDIA_ERR_NONE_SUPPORTED"
+    },
+
+    acceldata: {
+        ab: 0,
+        a: 0,
+        b: 0,
+        g: 0
     }
 };
 
