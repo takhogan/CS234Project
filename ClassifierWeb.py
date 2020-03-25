@@ -14,12 +14,15 @@ def classify():
 
 @app.route('/upload', methods = ['GET', 'POST'])
 def upload_audio():
+    print("form")
+    print(request.form)
+    print("headers")
     print(request.headers)
     if request.method == 'POST':
         print(request.files)
         f = request.files['file'] if request.files.get('file') else None
         # f.save(secure_filename(f.filename))
-        return 'office' if f is not None else "sorry"
+        return 'office'
     return 'womp womp'
 
 

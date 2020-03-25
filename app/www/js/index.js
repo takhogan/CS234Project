@@ -37,19 +37,48 @@ function getFSFail(evt) {
     console.log(evt.target.error.code);
 }
 
+function createDirectory(rootDirEntry, dirName) {
+    rootDirEntry.getDirectory(dirname, { create: true }, (entry) => { }, onErrorGetDir);
+}
+
+function createFile(dirEntry, fileName, isAppend) {
+    // Creates a new file or returns the file if it already exists.
+    dirEntry.getFile(fileName, {create: true, exclusive: false}, function(fileEntry) {
+
+        writeFile(fileEntry, null, isAppend);
+
+    }, onErrorCreateFile);
+
+}
+
+function onErrorGetDir(e) {
+    document.getElementById("debugWindow").innerText = e;
+}
+
+function onErrorCreateFile(e) {
+    document.getElementById("debugWindow").innerText = e;
+}
+
 function collectEnv() {    
     // create a recording id
     let id = Math.floor(Math.random() * 10000).toString();
     document.getElementById("debugWindow").innerText = id;
 
     // using cordova-plugin-media and cordova-plugin-file
-    window.resolveLocalFileSystemURL(cordova.file.applicationDirectory + "www/", function(entry) {
+    window.resolveLocalFileSystemURL(cordova.file.dataDirectory, function(entry) {
         let filePrefix = entry.toURL();
 
+        // create new file should error if already exists
+        createDirectory(entry, "media");
+        createFile(entry, "media/1984." + (device.platform === "Android" ? "m4a" : "mp3"));
+
+
         console.log("fs " + filePrefix);
-        let filePath = "/" + filePrefix + "media/1984audio-holder." + (device.platform === "Android" ? "m4a" : "mp3");
+        let filePath = "/" + filePrefix + "media/1984." + (device.platform === "Android" ? "m4a" : "mp3");
         console.log(filePath);
-        document.getElementById("debugWindow").innerText = filePath; 
+        document.getElementById("debugWindow").innerText = filePath;
+
+        // record here
         let media = new Media(filePath,
         () => { console.log("successful media load!"); }, (e) => { 
             console.log("Media error: " + e);
@@ -59,7 +88,7 @@ function collectEnv() {
         
         if (media != null) {
             console.log("Recording...");
-            document.getElementById("debugWindow").innerText = "Recording...";
+            document.getElementById("debugWindow").innerText = filePath;
         }
         media.startRecord();
     
@@ -77,11 +106,6 @@ function collectEnv() {
                 console.error(response.error);
                 document.getElementById("debugWindow").innerHTML = response.error;
             });
-    
-            // debuggin again
-            if (true) {
-                
-            }
         }, 3000);
     }, function(err) {
         console.log("kill me");
@@ -95,11 +119,23 @@ function onPause() {
     console.log("Application paused.");
 }
 
+// this apparently handles accelerometer data
+function handleOrientation(event) {
+    var absolute = event.absolute;
+    var alpha    = event.alpha;
+    var beta     = event.beta;
+    var gamma    = event.gamma;
+  
+    // Do stuff with the new orientation data
+    console.log(absolute + " " + alpha + " " + beta + " " + gamma);
+  }
+
 var app = {
     // Application Constructor
     initialize: function() {
         document.addEventListener('deviceready', this.onDeviceReady.bind(this), false);
         document.addEventListener('pause', onPause, false);
+        document.addEventListener("deviceorientation", handleOrientation, true);
         document.getElementById("refresh").addEventListener("click", collectEnv);
     },
     
